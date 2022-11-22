@@ -42,6 +42,8 @@ class PersonalizedBase(Dataset):
         self.lines = lines
 
         assert data_root, 'dataset directory not specified'
+        assert os.path.isdir(data_root), "Dataset directory doesn't exist"
+        assert os.listdir(data_root), "Dataset directory is empty"
 
         cond_model = shared.sd_model.cond_stage_model
 
@@ -96,7 +98,12 @@ class PersonalizedBase(Dataset):
     def create_text(self, filename_text):
         text = random.choice(self.lines)
         text = text.replace("[name]", self.placeholder_token)
-        text = text.replace("[filewords]", filename_text)
+        tags = filename_text.split(',')
+        if shared.opts.tag_drop_out != 0:
+            tags = [t for t in tags if random.random() > shared.opts.tag_drop_out]
+        if shared.opts.shuffle_tags:
+            random.shuffle(tags)
+        text = text.replace("[filewords]", ','.join(tags))
         return text
 
     def __len__(self):

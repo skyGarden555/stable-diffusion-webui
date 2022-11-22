@@ -6,7 +6,7 @@ import traceback
 import numpy as np
 from PIL import Image, ImageOps, ImageChops
 
-from modules import devices
+from modules import devices, sd_samplers
 from modules.processing import Processed, StableDiffusionProcessingImg2Img, process_images
 from modules.shared import opts, state
 import modules.shared as shared
@@ -55,6 +55,7 @@ def process_batch(p, input_dir, output_dir, args):
                 filename = f"{left}-{n}{right}"
 
             if not save_normally:
+                os.makedirs(output_dir, exist_ok=True)
                 processed_image.save(os.path.join(output_dir, filename))
 
 
@@ -80,7 +81,8 @@ def img2img(mode: int, prompt: str, negative_prompt: str, prompt_style: str, pro
         mask = None
 
     # Use the EXIF orientation of photos taken by smartphones.
-    image = ImageOps.exif_transpose(image) 
+    if image is not None:
+        image = ImageOps.exif_transpose(image) 
 
     assert 0. <= denoising_strength <= 1., 'can only work with strength in [0.0, 1.0]'
 
@@ -97,7 +99,7 @@ def img2img(mode: int, prompt: str, negative_prompt: str, prompt_style: str, pro
         seed_resize_from_h=seed_resize_from_h,
         seed_resize_from_w=seed_resize_from_w,
         seed_enable_extras=seed_enable_extras,
-        sampler_index=sampler_index,
+        sampler_index=sd_samplers.samplers_for_img2img[sampler_index].name,
         batch_size=batch_size,
         n_iter=n_iter,
         steps=steps,
@@ -135,6 +137,8 @@ def img2img(mode: int, prompt: str, negative_prompt: str, prompt_style: str, pro
         processed = modules.scripts.scripts_img2img.run(p, *args)
         if processed is None:
             processed = process_images(p)
+
+    p.close()
 
     shared.total_tqdm.clear()
 
