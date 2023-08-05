@@ -600,7 +600,8 @@ def save_image(image, path, basename, seed=None, prompt=None, extension='png', i
         elif opts.save_to_dirs:
             file_decoration = opts.samples_filename_pattern or "[seed]"
         else:
-            file_decoration = opts.samples_filename_pattern or "[seed]-[prompt_spaces]"
+            # file_decoration = opts.samples_filename_pattern or "[seed]-[prompt_spaces]"
+            file_decoration = opts.samples_filename_pattern or "[seed]-[datetime]"
 
         file_decoration = namegen.apply(file_decoration) + suffix
 
@@ -673,10 +674,20 @@ def save_image(image, path, basename, seed=None, prompt=None, extension='png', i
         except Exception as e:
             errors.display(e, "saving image as downscaled JPG")
 
-    if opts.save_txt and info is not None:
-        txt_fullfn = f"{fullfn_without_extension}.txt"
-        with open(txt_fullfn, "w", encoding="utf8") as file:
-            file.write(f"{info}\n")
+    # if opts.save_txt and info is not None:
+    if True:
+        # txt_fullfn = f"{fullfn_without_extension}.txt"
+        # with open(txt_fullfn, "w", encoding="utf8") as file:
+            # file.write(f"{info}\n")
+        txt_fullfn = os.path.join(path, "prompt.txt")
+        meta = {
+            'filename': fullfn,
+            'prompt': p.prompt,
+            'negative_prompt': p.negative_prompt,
+            'seed': seed
+        }
+        with open(txt_fullfn, "a", encoding="utf8") as file:
+            file.write(json.dumps(meta, indent=2) + "\n")
     else:
         txt_fullfn = None
 
